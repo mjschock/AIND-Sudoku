@@ -1,6 +1,8 @@
 assignments = []
 rows = 'ABCDEFGHI'
 cols = '123456789'
+unitAscending = ['I1', 'H2', 'G3', 'F4', 'E5', 'D6', 'C7', 'B8', 'A9']
+unitDescending = ['A1', 'B2', 'C3', 'D4', 'E5', 'F6', 'G7', 'H8', 'I9']
 
 def assign_value(values, box, value):
     """
@@ -36,7 +38,7 @@ def naked_twins(values):
                 if len(vals) == 2:
                     boxes_with_2_vals.append(box)
             if len(boxes_with_2_vals) > 1:
-                for outer_box in boxes_with_2_vals: # TODO: skip duplicate attempts
+                for outer_box in boxes_with_2_vals:
                     for inner_box in boxes_with_2_vals:
                         if inner_box != outer_box and values[inner_box] == values[outer_box]:
                             pair = values[inner_box]
@@ -117,6 +119,24 @@ def eliminate(values):
 
     return values
 
+def remove_value_from_diagonal_peers(values, peers, unit, val):
+    for peer in peers:
+        if peer != unit:
+            values[peer].replace(val, "")
+
+def eliminate_diagonal(values):
+    for unit in unitAscending:
+        val = values[unit]
+        if len(val) == 1:
+            remove_value_from_diagonal_peers(values, unitAscending, unit, val)
+
+    for unit in unitDescending:
+        val = values[unit]
+        if len(val) == 1:
+            remove_value_from_diagonal_peers(values, unitDescending, unit, val)
+
+    return values
+
 def get_units():
     boxes = get_boxes()
     row_units = [cross(r, cols) for r in rows]
@@ -143,6 +163,30 @@ def only_choice(values):
 
     return values
 
+def get_set_of_peer_vals(values, peers, box):
+    set_of_peer_vals = set([])
+    for peer in peers:
+        if peer != box:
+            set_of_peer_vals = set_of_peer_vals | set(list(values[peer]))
+    return set_of_peer_vals
+
+def only_choice_diagonal(values):
+    for box in unitAscending:
+        set_of_peer_vals = get_set_of_peer_vals(values, unitAscending, box)
+        vals = values[box]
+        for val in vals:
+            if val not in set_of_peer_vals:
+                values[box] = val
+
+    for box in unitDescending:
+        set_of_peer_vals = get_set_of_peer_vals(values, unitDescending, box)
+        vals = values[box]
+        for val in vals:
+            if val not in set_of_peer_vals:
+                values[box] = val
+
+    return values
+
 def reduce_puzzle(values):
     stalled = False
     while not stalled:
@@ -150,7 +194,9 @@ def reduce_puzzle(values):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
 
         values = eliminate(values)
+        values = eliminate_diagonal(values)
         values = only_choice(values)
+        values = only_choice_diagonal(values)
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
@@ -203,7 +249,7 @@ def solve(grid):
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
     values = grid_values(grid)
-    return values
+    return search(values)
 
 
 if __name__ == '__main__':

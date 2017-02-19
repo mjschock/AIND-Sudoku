@@ -7,7 +7,7 @@ A: We search through all units for each box, looking for identical twins within 
 
 # Question 2 (Diagonal Sudoku)
 Q: How do we use constraint propagation to solve the diagonal sudoku problem?  
-A: *Student should provide answer here*
+A: We add a new constraint, that the two diagonals must contain the nine digits. This is accomplished by adding a new function to eliminate values along the diagonals which have already be accounted for and another function to select the only choice if there is a value for a box within a diagonal which doesn't exist in it's peers (along the same diagonal).
 
 ### Install
 
