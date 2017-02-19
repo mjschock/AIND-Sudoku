@@ -15,6 +15,7 @@ def assign_value(values, box, value):
     return values
 
 def remove_pair_from_peers_in_unit(values, unit, pair):
+    "Removes a pair of values from all peers in a unit."
     for box in unit:
         vals = values[box]
         if vals != pair:
@@ -50,6 +51,7 @@ def cross(A, B):
     return [s+t for s in A for t in B]
 
 def get_boxes():
+    "Returns the cross product of the rows and columns."
     return cross(rows, cols)
 
 def grid_values(grid):
@@ -81,8 +83,17 @@ def display(values):
         if row in 'CF': print(line)
     print
 
+def remove_value_from_peers_by_key(values, peers, box):
+    "Removes a value from all peers of a box by it's key."
+    value = values[box]
+
+    for peer in peers:
+        values[peer] = values[peer].replace(value, "")
+
 def eliminate(values):
+    "Eliminates from row, col, and 3x3 grid peers any value that is already determined."
     def get_peers_by_key(key):
+        "Returns a set of all row, col, and 3x3 grid peers for a box."
         row = key[0]
         col = key[1]
         row_peers = cross(row, '123456789')
@@ -105,39 +116,30 @@ def eliminate(values):
         peers = list(set(row_peers + col_peers + square_peers) - set([key]))
         return peers
 
-    def remove_value_from_peers_by_key(value, key):
-        peers = get_peers_by_key(key)
-
-        for peer in peers:
-            values[peer] = values[peer].replace(value, "")
-
     for key in values:
         value = values[key]
 
         if len(value) == 1:
-            remove_value_from_peers_by_key(value, key)
+            remove_value_from_peers_by_key(values, get_peers_by_key(key), key)
 
     return values
 
-def remove_value_from_diagonal_peers(values, peers, unit, val):
-    for peer in peers:
-        if peer != unit:
-            values[peer].replace(val, "")
-
 def eliminate_diagonal(values):
+    "Eliminates from the diagonal peers any value that is already determined."
     for unit in unitAscending:
         val = values[unit]
         if len(val) == 1:
-            remove_value_from_diagonal_peers(values, unitAscending, unit, val)
+            remove_value_from_peers_by_key(values, list(set(unitAscending) - set([unit])), unit)
 
     for unit in unitDescending:
         val = values[unit]
         if len(val) == 1:
-            remove_value_from_diagonal_peers(values, unitDescending, unit, val)
+            remove_value_from_peers_by_key(values, list(set(unitDescending) - set([unit])), unit)
 
     return values
 
 def get_units():
+    "Returns a dictionary that maps each box to it's row, column, and 3x3 grid units."
     boxes = get_boxes()
     row_units = [cross(r, cols) for r in rows]
     column_units = [cross(rows, c) for c in cols]
@@ -147,6 +149,7 @@ def get_units():
     return units
 
 def only_choice(values):
+    "Selects the only choice for a box if it's row, column, and 3x3 grid peers don't contain that value."
     units = get_units()
     for key in units:
         vals = values[key]
@@ -164,6 +167,7 @@ def only_choice(values):
     return values
 
 def get_set_of_peer_vals(values, peers, box):
+    "Returns a set of all the peer values"
     set_of_peer_vals = set([])
     for peer in peers:
         if peer != box:
@@ -171,6 +175,7 @@ def get_set_of_peer_vals(values, peers, box):
     return set_of_peer_vals
 
 def only_choice_diagonal(values):
+    "Selects the only choice for a box if none of diagonal peers contain that value."
     for box in unitAscending:
         set_of_peer_vals = get_set_of_peer_vals(values, unitAscending, box)
         vals = values[box]
@@ -188,6 +193,7 @@ def only_choice_diagonal(values):
     return values
 
 def reduce_puzzle(values):
+    "Runs through the contraints repeatedly until the values don't change or a box is empty"
     stalled = False
     while not stalled:
         # Check how many boxes have a determined value
@@ -208,6 +214,7 @@ def reduce_puzzle(values):
     return values
 
 def search(values):
+    "Recursively searches for a solution, iterating upon a tree of options using depth first search"
     values = reduce_puzzle(values)
     if values is False:
         return False # something's wrong
