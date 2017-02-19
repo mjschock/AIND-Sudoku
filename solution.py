@@ -12,6 +12,12 @@ def assign_value(values, box, value):
         assignments.append(values.copy())
     return values
 
+def remove_pair_from_peers_in_unit(values, unit, pair):
+    for box in unit:
+        vals = values[box]
+        if vals != pair:
+            values[box] = vals.replace(pair[0], "").replace(pair[1], "")
+
 def naked_twins(values):
     """Eliminate values using the naked twins strategy.
     Args:
@@ -20,9 +26,22 @@ def naked_twins(values):
     Returns:
         the values dictionary with the naked twins eliminated from peers.
     """
-
-    # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
+    units = get_units()
+    for key in values:
+        units_by_key = units[key]
+        for unit in units_by_key:
+            boxes_with_2_vals = []
+            for box in unit:
+                vals = values[box]
+                if len(vals) == 2:
+                    boxes_with_2_vals.append(box)
+            if len(boxes_with_2_vals) > 1:
+                for outer_box in boxes_with_2_vals: # TODO: skip duplicate attempts
+                    for inner_box in boxes_with_2_vals:
+                        if inner_box != outer_box and values[inner_box] == values[outer_box]:
+                            pair = values[inner_box]
+                            remove_pair_from_peers_in_unit(values, unit, pair)
+    return values
 
 def cross(A, B):
     "Cross product of elements in A and elements in B."
@@ -183,6 +202,9 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
+    values = grid_values(grid)
+    return values
+
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
